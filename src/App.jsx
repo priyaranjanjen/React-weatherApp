@@ -1,101 +1,215 @@
 import { useState, useEffect } from 'react';
 import rainy from '../photos/rainy.jpg';
+import sunny from '../photos/sunny.jpg';
+import cloudy from '../photos/cloudy.jpg';
+import thunder from '../photos/thunderstorm.jpg';
+import windy from '../photos/windmill.jpg';
+
 import { RiSearch2Line } from "react-icons/ri";
-import { FaRegCircle } from "react-icons/fa6";
 import './App.css';
+import useDebounce from '../customhooks/useDebounce';
+import WeatherCard from '../component/basicWeather';
 
 export default function App() {
-  const [place, setPlace] = useState(null);
+  const [place, setPlace] = useState("");
   const [weatherData, setWeatherData] = useState(null);
+  const [todaysForecast, setTodaysForecast] = useState(null);
+  const [futureForecast, setFutureForecasts] = useState(null);
+  const [error, setError] = useState(null); // To handle errors
+  const debounceSearch = useDebounce(place,500)
+
+  function formatDateTime(date) {
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const dayName = days[date.getDay()];
+    const day = date.getDate();
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthName = months[date.getMonth()];
+    const year = date.getFullYear().toString().slice(-2);
+
+    return `${hours}:${minutes} - ${dayName} ${day} ${monthName} ${year}`;
+  }
+
+  const currentDate = new Date();
+  const formattedDateTime = formatDateTime(currentDate);
+
+  function showWeatherImages(weather) {
+    if (weather === "Rain") {
+      return rainy;
+    } else if (weather === "Clear") {
+      return sunny;
+    } else if (weather === "Clouds") {
+      return cloudy;
+    } else if (weather === "thunder") {
+      return thunder;
+    } else if (weather === "wind") {
+      return windy;
+    } else {
+      return rainy; // Default image
+    }
+  }
+
+  const handleSubmit = (event) => {
+    event.preventDefault(); // Prevent form from refreshing the page
+    if (place.trim()) {
+      setError(null); // Reset error if there's valid input
+    } else {
+      setError("Please enter a valid location."); // Set error for empty input
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`http://api.weatherapi.com/v1/forecast.json?key=cff444a355b34e978fe81403243003&q=${place}&days=5&aqi=no&alerts=no`);
+        const response = await fetch(
+          `https://api.openweathermap.org/data/2.5/forecast?q=${debounceSearch}&appid=bec289f063d8686cec8fb82776adc1a6`
+        );
+        if (!response.ok) {
+          throw new Error("City not found");
+        }        
         const finalResponse = await response.json();
+        console.log(finalResponse);
+
         setWeatherData(finalResponse);
+        setError(null)
       } catch (error) {
-        alert(error.message);
+        setError(error.message);
+        setWeatherData(null); // Reset weather data on error
       }
     };
-    if (place) {
+    if (debounceSearch) {
       fetchData();
     }
-  }, [place]);
+  }, [debounceSearch]);
+
+  useEffect(() => {
+  if (weatherData && weatherData.list) {
+    const currentDateTime = new Date();
+
+    // Get today's forecast up to the current time
+    const todaysForecastData = weatherData.list.filter((data) => {
+      const forecastDateTime = new Date(data.dt_txt);
+      return (
+        forecastDateTime.getDate() === currentDateTime.getDate() &&
+        forecastDateTime.getMonth() === currentDateTime.getMonth() &&
+        forecastDateTime.getFullYear() === currentDateTime.getFullYear() &&
+        forecastDateTime <= currentDateTime
+      );
+    });
+
+    const recent = todaysForecastData[todaysForecastData.length - 1];
+    setTodaysForecast(recent || null);
+
+    // Group forecast data by day for future dates
+    const groupedForecasts = weatherData.list.reduce((acc, data) => {
+      const forecastDateTime = new Date(data.dt_txt);
+      const day = forecastDateTime.toISOString().split('T')[0]; // YYYY-MM-DD
+
+      if (forecastDateTime > currentDateTime) { // Only consider future forecasts
+        if (!acc[day]) {
+          acc[day] = [];
+        }
+        acc[day].push(data);
+      }
+
+      return acc;
+    }, {});
+
+    // Get the most relevant forecast for each future day
+    const filteredForecasts = Object.keys(groupedForecasts).map((day) => {
+      const forecasts = groupedForecasts[day];
+      return forecasts[forecasts.length - 1]; // Most recent forecast for the day
+    });
+
+    console.log(filteredForecasts); // Check the filtered future forecasts
+    setFutureForecasts(filteredForecasts); // Update state with filtered future forecasts
+  }
+}, [weatherData]);
+
 
   return (
     <div className="relative h-screen w-full flex flex-col md:flex-row">
-
       {/* Background Image Section */}
       <div>
-        <img src={rainy} alt="Rainy background" className="absolute inset-0 h-full w-full object-cover" />
-      
+        <img
+          src={showWeatherImages(todaysForecast && todaysForecast.weather[todaysForecast.weather.length - 1].main)}
+          alt="Weather background"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+
         {/* Text Overlay */}
-        <div className='absolute top-14 left-16 right-16 text-white flex gap-6 items-center'>
-          <h1 className='font-medium text-6xl md:text-8xl lg:text-9xl flex'>
-            08 
-            <FaRegCircle className='w-4 h-auto mb-14 stroke-[6px]' />
+        <div className="absolute top-14 md:top-auto md:bottom-14 left-16 right-16 text-white flex flex-col md:flex-row gap-6">
+          <h1 className='font-medium text-5xl md:text-7xl flex items-start'>
+            {todaysForecast && todaysForecast.main ? 
+              (todaysForecast.main.temp - 273.15).toFixed(1) : 
+              "N/A"}°C
           </h1>
-          <div>
-            <h3 className='text-lg md:text-xl lg:text-2xl'>London</h3>
-            <span className='text-sm md:text-base lg:text-lg'>hfuwhfhw</span>
+          <div className=' flex flex-col justify-end'>
+            <span className='font-semibold text-lg md:text-2xl'>
+              {weatherData && weatherData.city ? weatherData.city.name : "Search location"}
+            </span>
+            <span className='text-sm md:text-base'>{formattedDateTime}</span>
           </div>
-          <div>
-            <img src="" alt="" />
-            <span>Rainy</span>
+          <div className='pb-0.5 flex flex-col justify-end'>
+            <span>{todaysForecast && todaysForecast.weather[todaysForecast.weather.length - 1].main}</span>
           </div>
         </div>
       </div>
-      
+
       {/* Blurry Transparent Section */}
       <div className="relative md:absolute md:inset-y-0 md:right-0 md:w-2/5 bg-black bg-opacity-30 backdrop-blur-md p-8 mt-auto md:mt-0 h-2/4 md:h-full overflow-y-auto">
         
         {/* Search Input */}
-        <div className='flex justify-center items-center mb-4'>
+        <form onSubmit={handleSubmit} className='flex justify-center items-center mb-4'>
           <input 
             type="text"
             value={place || ''}
             name="searchCity" 
             placeholder='Search Location'
             onChange={(e) => setPlace(e.target.value)}
-            className='w-full p-3 border-b-2 border-gray-400 bg-transparent focus:outline-none focus:ring-0 placeholder-gray-400 text-gray-400'
+            className='w-full p-3 border-b-2 border-gray-400 bg-transparent focus:outline-none focus:ring-0 placeholder-gray-300 text-lime-400'
           />
-          <RiSearch2Line className='w-6 h-auto ml-2 text-white cursor-pointer' />
-        </div>
+          <button type='submit' className='ml-2'>
+            <RiSearch2Line className='w-6 h-auto text-lime-400 cursor-pointer' />
+          </button>
+        </form>
+
+        {error && <p className="text-red-500 text-sm">{error}</p>} {/* Display error message */}
 
         {/* Suggested Locations */}
-        <div className='text-gray-400 flex flex-col gap-3 mt-8 ml-5 cursor-pointer'>
-          <span>New Delhi</span>
-          <span>Guwahati</span>
-          <span>Bengaluru</span>
-          <span>Chennai</span>
+        <div className='text-white flex flex-col gap-3 mt-8 ml-5 cursor-pointer'>
+          <span onClick={() => setPlace("Delhi")}>New Delhi</span>
+          <span onClick={() => setPlace("Guwahati")}>Guwahati</span>
+          <span onClick={() => setPlace("Bengaluru")}>Bengaluru</span>
+          <span onClick={() => setPlace("Chennai")}>Chennai</span>
         </div>
 
         <hr className='my-10 bg-gray-500 border-none h-0.5' />
 
-        {/* weather description */}
+        {/* Weather Description */}
         <div className='text-white'>
-          <h1>Weather Details</h1>
-          <div className='mt-10 flex flex-col gap-4 mx-5'>
+          <h1 className='text-2xl mb-10'>Weather Details</h1>
+          <div className='flex flex-col gap-4 mx-5'>
             <div className='flex justify-between items-center'>
-              <h4 className='text-gray-400'>Min temp</h4>
-              <span className='flex gap-1'>
-                {`${86} c / ${96} f`}
+              <h4 className='text-lg'>Min temp</h4>
+              <span className='flex gap-1 text-lime-400 text-sm '>
+                {todaysForecast && todaysForecast.main ? `${(todaysForecast.main.temp_min - 273.15).toFixed(1)}°C` : "N/A"}
               </span>
             </div>
             <div className='flex justify-between items-center'>
-              <h4 className='text-gray-400'>Max temp</h4>
-              <span className='flex gap-1'>
-                {`${86} c / ${96} f`}
+              <h4 className='text-lg'>Max temp</h4>
+              <span className='flex gap-1 text-lime-400 text-sm'>
+                {todaysForecast && todaysForecast.main ? `${(todaysForecast.main.temp_max - 273.15).toFixed(1)}°C` : "N/A"}
               </span>
             </div>
             <div className='flex justify-between items-center'>
-              <h4 className='text-gray-400'>Humidity</h4>
-              <span>{`${86} %`}</span>
+              <h4 className='text-lg'>Humidity</h4>
+              <span className='text-lime-400 text-sm'>{todaysForecast && todaysForecast.main ? `${todaysForecast.main.humidity}%` : "N/A"}</span>
             </div>
             <div className='flex justify-between items-center'>
-              <h4 className='text-gray-400'>Wind</h4>
-              <span>{`${86} km/h`}</span>
+              <h4 className='text-lg'>Wind</h4>
+              <span className='text-lime-400 text-sm'>{todaysForecast && todaysForecast.wind ? `${todaysForecast.wind.speed} km/h` : "N/A"}</span>
             </div>
           </div>
         </div>
@@ -103,47 +217,18 @@ export default function App() {
         <hr className='my-10 bg-gray-500 border-none h-0.5' />
 
         {/* 5-days forecast */}
-        <div>
-
+        <div className='text-white'>
+          <h1 className='text-2xl mb-10'>5-days forecast</h1>
+          <div className='flex justify-between'>
+          {
+            futureForecast && 
+            futureForecast.slice(0,5).map((data, index) => (
+              <WeatherCard key={index} weatherData={data}/>
+            ))
+          }
+          </div>
+          
         </div>
       </div>
     </div>
-  );
-}
-
-
-
-{/* <div className="grid grid-cols-1 md:grid-cols-10 md:grid-rows-10 h-full">
-
-  <div className="relative col-span-1 md:col-span-6">
-    <img src={cloudy} alt="rainy" className='h-screen w-full object-cover' />
-    <div className='absolute bottom-12 left-12 text-white flex items-center'>
-      <h1 className='font-medium text-9xl flex'>
-        08 
-        <FaRegCircle className=' w-4 h-auto mb-14 stroke-[6px] '/>
-      </h1>
-      <div className='ml-4'>
-        <h3 className='text-xl'>London</h3>
-        <span>hfuwhfhw</span>
-      </div>
-    </div>
-  </div>
-
-
-  <div className="col-span-1 md:col-span-4 bg-slate-200 p-4">
-    <div className='flex justify-center items-center mb-4'>
-      <input 
-        type="text"
-        value={place || ''}
-        name="searchCity" 
-        placeholder='city'
-        onChange={(e) => setPlace(e.target.value)}
-        className='border border-gray-300 p-2 rounded'
-      />
-      <RiSearch2Line className='w-10 h-auto ml-2' />
-    </div>
-    <div>
-      <h1>{place}</h1>
-    </div>
-  </div>
-</div> */}
+  )}

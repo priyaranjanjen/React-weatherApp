@@ -1,0 +1,45 @@
+/* eslint-disable react/prop-types */
+import cloudy from '../icons/cloudy.svg'
+import rain from '../icons/rain.svg'
+import sunny from '../icons/sunny.svg'
+
+
+export default function WeatherCard({weatherData}){
+    console.log(weatherData);
+
+    function formatDay(date) {        
+        // const hours = date.getHours().toString().padStart(2, '0');
+        // const minutes = date.getMinutes().toString().padStart(2, '0');
+        const days = ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"];
+        const dayName = days[date.getDay()];
+        const day = date.getDate();
+        // const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        // const monthName = months[date.getMonth()];
+        // const year = date.getFullYear().toString().slice(-2);
+
+        return `${dayName}`;
+    }
+
+    const currentDate = new Date(weatherData.dt_txt);
+    const formattedDateTime = formatDay(currentDate);
+    
+    function showWeatherImages(weather) {
+        if (weather === "Rain") {
+        return rain;
+        } else if (weather === "Clear") {
+        return sunny;
+        } else if (weather === "Clouds") {
+        return cloudy;
+        } else {
+        return rain; // Default image
+        }
+    }
+    
+    return(
+        <div className='flex flex-col items-center gap-3'>
+            <h3 className=''>{formattedDateTime}</h3>
+            <img src={showWeatherImages(weatherData.weather[weatherData.weather.length - 1].main)} alt="djcdj" className='w-2 h-auto'/>
+            <h4 className=''>{(weatherData.main.temp - 273.15).toFixed(1)}</h4>
+        </div>
+    )
+}
