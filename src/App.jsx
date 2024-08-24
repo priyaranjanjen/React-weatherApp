@@ -4,6 +4,10 @@ import sunny from '../photos/sunny.jpg';
 import cloudy from '../photos/cloudy.jpg';
 import thunder from '../photos/thunderstorm.jpg';
 import windy from '../photos/windmill.jpg';
+import cloudIcon from '../icons/cloudy.svg';
+import rainIcon from '../icons/rain.svg';
+import sunnyIcon from '../icons/sunny.svg';
+
 
 import { RiSearch2Line } from "react-icons/ri";
 import './App.css';
@@ -47,6 +51,18 @@ export default function App() {
       return windy;
     } else {
       return rainy; // Default image
+    }
+  }
+
+  function showWeatherIcons(weather) {
+    if (weather === "Rain") {
+    return rainIcon;
+    } else if (weather === "Clear") {
+    return sunnyIcon;
+    } else if (weather === "Clouds") {
+    return cloudIcon;
+    } else {
+    return rainIcon; // Default image
     }
   }
 
@@ -146,8 +162,13 @@ export default function App() {
               "N/A"}°C
           </h1>
           <div className=' flex flex-col justify-end'>
-            <span className='font-semibold text-lg md:text-2xl'>
+            <span className='font-semibold text-lg md:text-2xl flex items-center gap-5 '>
               {weatherData && weatherData.city ? weatherData.city.name : "Search location"}
+              <img 
+                src={showWeatherIcons(todaysForecast && todaysForecast.weather[todaysForecast.weather.length - 1].main)} 
+                alt="weather-icon" 
+                className='w-7 stroke-[6px]'
+              />
             </span>
             <span className='text-sm md:text-base'>{formattedDateTime}</span>
           </div>
@@ -219,7 +240,7 @@ export default function App() {
         {/* 5-days forecast */}
         <div className='text-white'>
           <h1 className='text-2xl mb-10'>5-days forecast</h1>
-          <div className='flex justify-between'>
+          <div className='flex justify-evenly flex-wrap'>
           {
             futureForecast && 
             futureForecast.slice(0,5).map((data, index) => (
