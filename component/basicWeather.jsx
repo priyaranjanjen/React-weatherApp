@@ -32,7 +32,10 @@ export default function WeatherCard({weatherData}){
     return(
         <div className='flex flex-col items-center gap-3'>
             <h3 className=''>{formattedDateTime}</h3>
-            <img src={showWeatherIcons(weatherData.weather[weatherData.weather.length - 1].main)} alt="weather icon" />
+            <img 
+                src={showWeatherIcons(weatherData.weather[weatherData.weather.length - 1].main)} alt="weather icon"
+                loading='lazy'
+            />
             <h4 className=''>{(weatherData.main.temp - 273.15).toFixed(1)}</h4>
         </div>
     )

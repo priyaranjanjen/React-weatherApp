@@ -152,6 +152,7 @@ export default function App() {
           src={showWeatherImages(todaysForecast && todaysForecast.weather[todaysForecast.weather.length - 1].main)}
           alt="Weather background"
           className="absolute inset-0 h-full w-full object-cover"
+          loading='lazy'
         />
 
         {/* Text Overlay */}
@@ -168,6 +169,7 @@ export default function App() {
                 src={showWeatherIcons(todaysForecast && todaysForecast.weather[todaysForecast.weather.length - 1].main)} 
                 alt="weather-icon" 
                 className='w-7 stroke-[6px]'
+                loading='lazy'
               />
             </span>
             <span className='text-sm md:text-base'>{formattedDateTime}</span>
