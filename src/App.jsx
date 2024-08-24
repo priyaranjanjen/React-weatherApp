@@ -151,9 +151,9 @@ export default function App() {
             </span>
             <span className='text-sm md:text-base'>{formattedDateTime}</span>
           </div>
-          <div className='pb-0.5 flex flex-col justify-end'>
+          {/* <div className='pb-0.5 flex flex-col justify-end'>
             <span>{todaysForecast && todaysForecast.weather[todaysForecast.weather.length - 1].main}</span>
-          </div>
+          </div> */}
         </div>
       </div>
 
