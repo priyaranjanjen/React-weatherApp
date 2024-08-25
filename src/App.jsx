@@ -13,6 +13,33 @@ import { RiSearch2Line } from "react-icons/ri";
 import './App.css';
 import useDebounce from '../customhooks/useDebounce';
 import WeatherCard from '../component/basicWeather';
+// import ToggleSwitch from '../component/toggleButton';
+
+function ToggleSwitch({isOn, setIsOn}) {
+  // const [isOn, setIsOn] = useState(false);
+
+  const handleToggle = () => {
+    setIsOn(!isOn);
+  };
+
+  return (
+    <div className="flex items-center justify-center">
+      <div 
+        className={`w-12 h-6 mr-4 flex items-center bg-gray-500 rounded-full p-1 cursor-pointer transition duration-300 ${isOn ? 'bg-green-500' : 'bg-gray-500'}`} 
+        onClick={handleToggle}
+      >
+        <div className='flex gap-4 w-full'>
+          <span>C</span>
+          <span className='text-green-500'>F</span>
+        </div>
+        {/* The circle */}
+        <div 
+          className={`absolute bg-white w-4 h-4 rounded-full shadow-md transform transition duration-300 ${isOn ? 'translate-x-6' : ''}`}
+        ></div>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const [place, setPlace] = useState("");
@@ -20,6 +47,7 @@ export default function App() {
   const [todaysForecast, setTodaysForecast] = useState(null);
   const [futureForecast, setFutureForecasts] = useState(null);
   const [error, setError] = useState(null); // To handle errors
+  const [isOn, setIsOn] = useState(false); // to handle the toggle Button
   const debounceSearch = useDebounce(place,500)
 
   function formatDateTime(date) {
@@ -158,9 +186,12 @@ export default function App() {
         <div className="absolute top-14 md:top-auto md:bottom-14 left-16 right-16 text-white flex flex-col md:flex-row gap-6">
           <h1 className='font-medium text-5xl md:text-7xl flex items-start'>
             {todaysForecast && todaysForecast.main ? 
-              (todaysForecast.main.temp - 273.15).toFixed(1) : 
-              "N/A"}°C
+              isOn ? 
+                `${(((todaysForecast.main.temp - 273.15) * 9/5) + 32).toFixed(1)}°F` : 
+                `${(todaysForecast.main.temp - 273.15).toFixed(1)}°C` : 
+              "N/A"}
           </h1>
+
           <div className=' flex flex-col justify-end'>
             <span className='font-semibold text-lg md:text-2xl flex items-center gap-5 '>
               {weatherData && weatherData.city ? weatherData.city.name : "Search location"}
@@ -211,24 +242,38 @@ export default function App() {
 
         {/* Weather Description */}
         <div className='text-white'>
-          <h1 className='text-2xl mb-10'>Weather Details</h1>
+          <div className='mb-10 flex justify-between items-center'>
+            <h1 className='text-2xl'>Weather Details</h1>
+            <ToggleSwitch isOn={isOn} setIsOn={setIsOn}/>
+          </div>
           <div className='flex flex-col gap-4 mx-5'>
             <div className='flex justify-between items-center'>
               <h4 className='text-lg'>Min temp</h4>
-              <span className='flex gap-1 text-lime-400 text-sm '>
-                {todaysForecast && todaysForecast.main ? `${(todaysForecast.main.temp_min - 273.15).toFixed(1)}°C` : "N/A"}
+              <span className='flex gap-1 text-lime-400 text-sm'>
+                {todaysForecast && todaysForecast.main ? 
+                  isOn ? 
+                    `${(((todaysForecast.main.temp_min - 273.15) * 9/5) + 32).toFixed(1)}°F` : 
+                    `${(todaysForecast.main.temp_min - 273.15).toFixed(1)}°C` : 
+                  "N/A"}
               </span>
             </div>
+
             <div className='flex justify-between items-center'>
               <h4 className='text-lg'>Max temp</h4>
               <span className='flex gap-1 text-lime-400 text-sm'>
-                {todaysForecast && todaysForecast.main ? `${(todaysForecast.main.temp_max - 273.15).toFixed(1)}°C` : "N/A"}
+                {todaysForecast && todaysForecast.main ? 
+                  isOn ? 
+                    `${(((todaysForecast.main.temp_max - 273.15) * 9/5) + 32).toFixed(1)}°F` : 
+                    `${(todaysForecast.main.temp_max - 273.15).toFixed(1)}°C` : 
+                  "N/A"}
               </span>
             </div>
+
             <div className='flex justify-between items-center'>
               <h4 className='text-lg'>Humidity</h4>
               <span className='text-lime-400 text-sm'>{todaysForecast && todaysForecast.main ? `${todaysForecast.main.humidity}%` : "N/A"}</span>
             </div>
+
             <div className='flex justify-between items-center'>
               <h4 className='text-lg'>Wind</h4>
               <span className='text-lime-400 text-sm'>{todaysForecast && todaysForecast.wind ? `${todaysForecast.wind.speed} km/h` : "N/A"}</span>
