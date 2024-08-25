@@ -5,7 +5,7 @@ import sunny from '../icons/sunny.svg'
 
 
 export default function WeatherCard({weatherData}){
-    console.log(weatherData);
+    // console.log(weatherData);
 
     function formatDay(date) {        
         const days = ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"];

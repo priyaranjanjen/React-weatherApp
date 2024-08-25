@@ -67,7 +67,7 @@ export default function App() {
   }
 
   const handleSubmit = (event) => {
-    event.preventDefault(); // Prevent form from refreshing the page
+    event.preventDefault();
     if (place.trim()) {
       setError(null); // Reset error if there's valid input
     } else {
@@ -85,7 +85,6 @@ export default function App() {
           throw new Error("City not found");
         }        
         const finalResponse = await response.json();
-        console.log(finalResponse);
 
         setWeatherData(finalResponse);
         setError(null)
@@ -138,7 +137,7 @@ export default function App() {
       return forecasts[forecasts.length - 1]; // Most recent forecast for the day
     });
 
-    console.log(filteredForecasts); // Check the filtered future forecasts
+    // console.log(filteredForecasts); // Check the filtered future forecasts
     setFutureForecasts(filteredForecasts); // Update state with filtered future forecasts
   }
 }, [weatherData]);
@@ -174,9 +173,9 @@ export default function App() {
             </span>
             <span className='text-sm md:text-base'>{formattedDateTime}</span>
           </div>
-          {/* <div className='pb-0.5 flex flex-col justify-end'>
+          <div className='pb-0.5 flex flex-col justify-end'>
             <span>{todaysForecast && todaysForecast.weather[todaysForecast.weather.length - 1].main}</span>
-          </div> */}
+          </div>
         </div>
       </div>
 
